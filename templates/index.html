@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InsightFlow — Business Intelligence Dashboard</title>
+    <meta name="description" content="Professional BI dashboard with real-time KPIs, revenue analytics, sales tracking, customer insights, and advanced analytics." />
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<!-- ════════ Loading Overlay ════════ -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-ring"></div>
+    <p>Initializing dashboard&hellip;</p>
+</div>
+
+<!-- ════════ Mobile Sidebar Overlay ════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-wrapper">
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SIDEBAR                                                            -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <span class="material-icons-round">insights</span>
+            </div>
+            <div class="brand-text">
+                <h1>InsightFlow</h1>
+                <span>Business Intelligence</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Analytics</div>
+            <a class="nav-item active" data-section="overview" id="nav-overview">
+                <span class="material-icons-round">dashboard</span>
+                Overview
+                <span class="nav-badge primary">Live</span>
+            </a>
+            <a class="nav-item" data-section="sales" id="nav-sales">
+                <span class="material-icons-round">point_of_sale</span>
+                Sales
+            </a>
+            <a class="nav-item" data-section="customers" id="nav-customers">
+                <span class="material-icons-round">people</span>
+                Customers
+            </a>
+            <a class="nav-item" data-section="analytics" id="nav-analytics">
+                <span class="material-icons-round">analytics</span>
+                Analytics
+            </a>
+
+            <div class="nav-section-title">System</div>
+            <a class="nav-item" id="nav-integrations">
+                <span class="material-icons-round">extension</span>
+                Integrations
+            </a>
+            <a class="nav-item" id="nav-settings">
+                <span class="material-icons-round">settings</span>
+                Settings
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">VK</div>
+                <div class="user-info">
+                    <span>Vaibhav K.</span>
+                    <small>Admin</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MAIN CONTENT                                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <main class="main-content">
+
+        <!-- ── Header ──────────────────────────────────────────────────── -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <span class="material-icons-round">menu</span>
+                </button>
+                <div class="header-title">
+                    <h2 id="sectionTitle">Dashboard Overview</h2>
+                    <p id="sectionSubtitle">Key metrics &amp; performance summary</p>
+                </div>
+            </div>
+
+            <div class="header-filters">
+                <div class="filter-group">
+                    <label for="startDate">From</label>
+                    <input type="date" class="filter-input" id="startDate" />
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">To</label>
+                    <input type="date" class="filter-input" id="endDate" />
+                </div>
+                <div class="filter-group">
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="all">All Categories</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select class="filter-select" id="regionFilter">
+                        <option value="all">All Regions</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="btnApplyFilters">
+                    <span class="material-icons-round icon-spin">refresh</span>
+                    Apply
+                </button>
+                <button class="btn btn-outline" id="btnExportCSV" title="Export filtered data as CSV">
+                    <span class="material-icons-round">download</span>
+                    Export CSV
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Dashboard Content ───────────────────────────────────────── -->
+        <div class="dashboard-content">
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- SECTION: Overview                                         -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <section id="section-overview" class="section active">
+                <div class="section-grid stagger">
+
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid" id="overviewKpis"></div>
+
+                    <!-- Revenue Trend + Category Breakdown -->
+                    <div class="grid-2-1 fade-up">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Revenue &amp; Profit Trend</h3>
+                                    <div class="subtitle">Monthly comparison</div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper" style="height:300px">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Sales by Category</h3>
+                                    <div class="subtitle">Revenue distribution</div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper" style="height:300px;display:flex;align-items:center;justify-content:center">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Region Breakdown + Goals -->
+                    <div class="grid-cols-2 fade-up">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Revenue by Region</h3>
+                                    <div class="subtitle">Geographic breakdown</div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper" style="height:280px">
+                                <canvas id="regionChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Quarterly Goals</h3>
+                                    <div class="subtitle">Progress tracking</div>
+                                </div>
+                            </div>
+                            <div class="goals-grid" id="overviewGoals"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- SECTION: Sales                                            -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <section id="section-sales" class="section">
+                <div class="section-grid stagger">
+
+                    <!-- Sales KPIs -->
+                    <div class="kpi-grid" id="salesKpis"></div>
+
+                    <!-- Sales Trend Chart -->
+                    <div class="card fade-up">
+                        <div class="card-header">
+                            <div>
+                                <h3>Sales Trend</h3>
+                                <div class="subtitle">Monthly revenue &amp; order volume</div>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper" style="height:300px">
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Products Table -->
+                    <div class="card fade-up">
+                        <div class="card-header">
+                            <div>
+                                <h3>Top Products</h3>
+                                <div class="subtitle">By total revenue</div>
+                            </div>
+                        </div>
+                        <div class="table-controls">
+                            <input type="text" class="search-input" id="productSearch" placeholder="Search products..." />
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table" id="topProductsTable">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="product">Product <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="category">Category <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="revenue">Revenue <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="units">Units <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="profit">Profit <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="orders">Orders <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topProductsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent Orders Table -->
+                    <div class="card fade-up">
+                        <div class="card-header">
+                            <div>
+                                <h3>Recent Orders</h3>
+                                <div class="subtitle">Latest 100 transactions</div>
+                            </div>
+                        </div>
+                        <div class="table-controls">
+                            <input type="text" class="search-input" id="salesSearch" placeholder="Search orders..." />
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table" id="recentOrdersTable">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="order_id">Order ID <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="date">Date <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="customer">Customer <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="product">Product <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="category">Category <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="region">Region <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="revenue">Revenue <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        <th data-sort="status">Status <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentOrdersBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- SECTION: Customers                                        -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <section id="section-customers" class="section">
+                <div class="section-grid stagger">
+
+                    <!-- Customer KPIs -->
+                    <div class="kpi-grid" id="customerKpis"></div>
+
+                    <!-- Segment Chart + Top Customers -->
+                    <div class="grid-cols-2 fade-up">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Customer Segments</h3>
+                                    <div class="subtitle">Distribution by type</div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper" style="height:300px;display:flex;align-items:center;justify-content:center">
+                                <canvas id="segmentChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Top Customers</h3>
+                                    <div class="subtitle">By total revenue</div>
+                                </div>
+                            </div>
+                            <div class="table-controls">
+                                <input type="text" class="search-input" id="customerSearch" placeholder="Search customers..." />
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table" id="topCustomersTable">
+                                    <thead>
+                                        <tr>
+                                            <th data-sort="customer_id">ID <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                            <th data-sort="name">Customer <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                            <th data-sort="revenue">Revenue <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                            <th data-sort="orders">Orders <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                            <th data-sort="last_order">Last Order <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topCustomersBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customer Acquisition Trend -->
+                    <div class="card fade-up">
+                        <div class="card-header">
+                            <div>
+                                <h3>Customer Acquisition</h3>
+                                <div class="subtitle">Monthly new customers</div>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper" style="height:280px">
+                            <canvas id="acquisitionChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- SECTION: Analytics                                        -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <section id="section-analytics" class="section">
+                <div class="section-grid stagger">
+
+                    <!-- Category Comparison + Region Performance -->
+                    <div class="grid-cols-2 fade-up">
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Category Comparison</h3>
+                                    <div class="subtitle">Revenue vs Profit by category</div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper" style="height:300px">
+                                <canvas id="categoryCompChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h3>Regional Performance</h3>
+                                    <div class="subtitle">Monthly revenue by region (stacked)</div>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper" style="height:300px">
+                                <canvas id="regionPerfChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Trend -->
+                    <div class="card fade-up">
+                        <div class="card-header">
+                            <div>
+                                <h3>Daily Revenue Trend</h3>
+                                <div class="subtitle">Last 30 days</div>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper" style="height:280px">
+                            <canvas id="dailyTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Profitability Analysis -->
+                    <div class="card fade-up">
+                        <div class="card-header">
+                            <div>
+                                <h3>Profitability Analysis</h3>
+                                <div class="subtitle">Profit margin by category</div>
+                            </div>
+                        </div>
+                        <div class="profit-grid" id="profitGrid"></div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ── Footer ──────────────────────────────────────────────────── -->
+        <footer class="dash-footer">
+            <span>&copy; 2026 InsightFlow — Business Intelligence Suite</span>
+            <span class="status-badge">System Online</span>
+        </footer>
+
+    </main>
+</div>
+
+<!-- App Script -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>
